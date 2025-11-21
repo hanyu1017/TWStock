@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import MarketIndicesBanner from '@/components/dashboard/MarketIndicesBanner';
-import TabbedPortfolioList from '@/components/portfolio/TabbedPortfolioList';
+import CompactPortfolioSummary from '@/components/portfolio/CompactPortfolioSummary';
+import CompactPortfolioList from '@/components/portfolio/CompactPortfolioList';
 import AddStockModal from '@/components/modals/AddStockModal';
 import SettingsModal from '@/components/modals/SettingsModal';
 
@@ -15,6 +16,7 @@ export default function DashboardPage() {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [showMenu, setShowMenu] = useState(false);
+  const [activeTab, setActiveTab] = useState<'TW' | 'US'>('TW');
   const [settings, setSettings] = useState({
     updateInterval: 5,
     selectedIndices: ['^TWII', '^DJI', '^IXIC', '^GSPC', '^N225', '^KS11', 'ES=F', 'NQ=F', 'YM=F', 'NKD=F'],
@@ -171,10 +173,39 @@ export default function DashboardPage() {
       <MarketIndicesBanner />
 
       {/* 主要內容 */}
-      <main className="pb-6">
-        {/* 持股列表（帶標籤頁） */}
-        <div className="mt-4 mx-4">
-          <TabbedPortfolioList refreshTrigger={refreshTrigger} />
+      <main className="pb-6 px-4">
+        {/* 持股統計 */}
+        <div className="mt-4">
+          <CompactPortfolioSummary refreshTrigger={refreshTrigger} />
+        </div>
+
+        {/* 台股/美股標籤 */}
+        <div className="mt-4 flex gap-2 bg-slate-800 p-1 rounded-lg border border-slate-700">
+          <button
+            onClick={() => setActiveTab('TW')}
+            className={`flex-1 py-2 rounded-md font-semibold transition-colors ${
+              activeTab === 'TW'
+                ? 'bg-blue-600 text-white'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            🇹🇼 台股
+          </button>
+          <button
+            onClick={() => setActiveTab('US')}
+            className={`flex-1 py-2 rounded-md font-semibold transition-colors ${
+              activeTab === 'US'
+                ? 'bg-blue-600 text-white'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            🇺🇸 美股
+          </button>
+        </div>
+
+        {/* 持股列表 */}
+        <div className="mt-4">
+          <CompactPortfolioList refreshTrigger={refreshTrigger} market={activeTab} />
         </div>
 
         {/* 浮動新增按鈕 */}
