@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import BottomNav from '@/components/layout/BottomNav';
 
 interface InstitutionalTrade {
   symbol: string;
@@ -123,7 +124,7 @@ export default function AfterMarketPage() {
       </header>
 
       {/* 主要內容 */}
-      <main className="p-4">
+      <main className="p-4 pb-24">
         <div className="bg-slate-800 rounded-lg shadow-sm border border-slate-700">
           {/* 標題 */}
           <div className="p-4 border-b border-slate-700">
@@ -213,6 +214,9 @@ export default function AfterMarketPage() {
           </div>
         </div>
       </main>
+
+      {/* 底部導航欄 */}
+      <BottomNav />
     </div>
   );
 }

@@ -8,6 +8,7 @@ import CompactPortfolioSummary from '@/components/portfolio/CompactPortfolioSumm
 import CompactPortfolioList from '@/components/portfolio/CompactPortfolioList';
 import AddStockModal from '@/components/modals/AddStockModal';
 import SettingsModal from '@/components/modals/SettingsModal';
+import BottomNav from '@/components/layout/BottomNav';
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -173,7 +174,7 @@ export default function DashboardPage() {
       <MarketIndicesBanner />
 
       {/* 主要內容 */}
-      <main className="pb-6 px-4">
+      <main className="pb-24 px-4">
         {/* 持股統計 */}
         <div className="mt-4">
           <CompactPortfolioSummary refreshTrigger={refreshTrigger} />
@@ -208,10 +209,10 @@ export default function DashboardPage() {
           <CompactPortfolioList refreshTrigger={refreshTrigger} market={activeTab} />
         </div>
 
-        {/* 浮動新增按鈕 */}
+        {/* 浮動新增按鈕 - 調整位置避開底部導航欄 */}
         <button
           onClick={() => setShowAddStockModal(true)}
-          className="fixed bottom-6 right-6 w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center justify-center transition-transform hover:scale-110 z-40"
+          className="fixed bottom-24 right-6 w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center justify-center transition-transform hover:scale-110 z-40"
           title="新增股票"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -242,6 +243,9 @@ export default function DashboardPage() {
           }}
         />
       )}
+
+      {/* 底部導航欄 */}
+      <BottomNav />
     </div>
   );
 }

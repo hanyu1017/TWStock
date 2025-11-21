@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import BottomNav from '@/components/layout/BottomNav';
 
 interface WatchlistItem {
   id: string;
@@ -126,7 +127,7 @@ export default function WatchlistPage() {
       </header>
 
       {/* 主要內容 */}
-      <main className="p-4">
+      <main className="p-4 pb-24">
         <div className="bg-slate-800 rounded-lg shadow-sm border border-slate-700">
           {watchlist.length === 0 ? (
             <div className="text-center py-12 px-4">
@@ -201,16 +202,19 @@ export default function WatchlistPage() {
         </div>
       </main>
 
-      {/* 浮動新增按鈕 */}
+      {/* 浮動新增按鈕 - 調整位置避開底部導航欄 */}
       <button
         onClick={() => router.push('/dashboard?action=add')}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center justify-center transition-transform hover:scale-110 z-40"
+        className="fixed bottom-24 right-6 w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center justify-center transition-transform hover:scale-110 z-40"
         title="新增關注"
       >
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
         </svg>
       </button>
+
+      {/* 底部導航欄 */}
+      <BottomNav />
     </div>
   );
 }
