@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -70,9 +70,7 @@ export default function DashboardPage() {
                 新增股票
               </Button>
               <Button
-                onClick={() => {
-                  router.push('/api/auth/signout');
-                }}
+                onClick={() => signOut({ callbackUrl: '/login' })}
                 variant="ghost"
                 size="sm"
               >
