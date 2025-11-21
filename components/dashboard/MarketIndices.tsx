@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import SettingsModal from '@/components/modals/SettingsModal';
 
 interface MarketIndex {
   symbol: string;
@@ -13,6 +14,12 @@ interface MarketIndex {
   change: number;
   changePercent: number;
   history?: number[]; // Intraday history
+  ohlc?: {
+    open: number;
+    high: number;
+    low: number;
+    close: number;
+  };
 }
 
 interface CandleData {
@@ -22,6 +29,11 @@ interface CandleData {
   close: number;
 }
 
+const DEFAULT_SETTINGS = {
+  updateInterval: 5,
+  selectedIndices: ['^TWII', '^DJI', '^IXIC', '^GSPC', '^N225', '^KS11', 'ES=F', 'NQ=F', 'YM=F', 'NKD=F'],
+};
+
 export default function MarketIndices({ refreshTrigger }: { refreshTrigger: number }) {
   const [indices, setIndices] = useState<MarketIndex[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -30,34 +42,50 @@ export default function MarketIndices({ refreshTrigger }: { refreshTrigger: numb
   const [countdown, setCountdown] = useState(5);
   const [flashingIndices, setFlashingIndices] = useState<Set<string>>(new Set());
   const previousValuesRef = useRef<Map<string, number>>(new Map());
+  const [showSettings, setShowSettings] = useState(false);
+  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+
+  // Load settings from localStorage on mount
+  useEffect(() => {
+    const savedSettings = localStorage.getItem('marketIndexSettings');
+    if (savedSettings) {
+      try {
+        const parsed = JSON.parse(savedSettings);
+        setSettings(parsed);
+        setCountdown(parsed.updateInterval);
+      } catch (error) {
+        console.error('Error loading settings:', error);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     fetchIndices();
-    // Refresh every 5 seconds
-    const interval = setInterval(fetchIndices, 5000);
+    // Refresh based on user settings
+    const interval = setInterval(fetchIndices, settings.updateInterval * 1000);
     return () => clearInterval(interval);
-  }, [refreshTrigger]);
+  }, [refreshTrigger, settings.updateInterval]);
 
   // Countdown timer
   useEffect(() => {
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
-          return 5;
+          return settings.updateInterval;
         }
         return prev - 1;
       });
     }, 1000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [settings.updateInterval]);
 
   // Reset countdown when data updates
   useEffect(() => {
     if (lastUpdate) {
-      setCountdown(5);
+      setCountdown(settings.updateInterval);
     }
-  }, [lastUpdate]);
+  }, [lastUpdate, settings.updateInterval]);
 
   const fetchIndices = async () => {
     try {
@@ -134,90 +162,60 @@ export default function MarketIndices({ refreshTrigger }: { refreshTrigger: numb
     }
   };
 
-  // Generate candlestick data based on current value and previous close
-  const generateCandlesticks = (index: MarketIndex): CandleData[] => {
-    const candles: CandleData[] = [];
-    const start = index.previousClose;
-    const end = index.currentValue;
-    const totalChange = end - start;
-    const numCandles = 8; // 8 K線蠟燭
-
-    for (let i = 0; i < numCandles; i++) {
-      const progress = i / numCandles;
-      const nextProgress = (i + 1) / numCandles;
-
-      // Calculate trend for this candle
-      const candleStart = start + totalChange * progress;
-      const candleEnd = start + totalChange * nextProgress;
-
-      // Add some randomness for realistic candles
-      const volatility = Math.abs(totalChange) * 0.15;
-      const noise1 = (Math.random() - 0.5) * volatility;
-      const noise2 = (Math.random() - 0.5) * volatility;
-
-      const open = candleStart + noise1;
-      const close = candleEnd + noise2;
-      const high = Math.max(open, close) + Math.random() * volatility * 0.3;
-      const low = Math.min(open, close) - Math.random() * volatility * 0.3;
-
-      candles.push({ open, high, low, close });
-    }
-
-    return candles;
+  const handleSaveSettings = (newSettings: { updateInterval: number; selectedIndices: string[] }) => {
+    setSettings(newSettings);
+    setCountdown(newSettings.updateInterval);
+    localStorage.setItem('marketIndexSettings', JSON.stringify(newSettings));
   };
 
-  // Render candlestick chart (K線圖)
+  // Render single candlestick chart (K線圖) with real OHLC data
   const renderCandlestickChart = (index: MarketIndex) => {
-    const candles = generateCandlesticks(index);
-    const allValues = candles.flatMap(c => [c.high, c.low]);
-    const max = Math.max(...allValues);
-    const min = Math.min(...allValues);
-    const range = max - min;
-    const width = 80;
-    const height = 24;
-    const candleWidth = width / candles.length - 2;
+    // Use real OHLC data if available
+    if (!index.ohlc) return null;
+
+    const { open, high, low, close } = index.ohlc;
+    const range = high - low;
+    const width = 40;
+    const height = 32;
+    const candleWidth = 24;
 
     if (range === 0) return null;
 
+    const x = (width - candleWidth) / 2;
+    const bodyTop = Math.min(open, close);
+    const bodyBottom = Math.max(open, close);
+
+    const highY = height - ((high - low) / range) * height;
+    const lowY = height;
+    const bodyTopY = height - ((bodyTop - low) / range) * height;
+    const bodyBottomY = height - ((bodyBottom - low) / range) * height;
+
+    // 紅漲綠跌 (台灣習慣)
+    const isRising = close >= open;
+    const color = isRising ? '#ef4444' : '#22c55e'; // 紅色上漲，綠色下跌
+
     return (
       <svg width={width} height={height} className="inline-block">
-        {candles.map((candle, i) => {
-          const x = (i * width) / candles.length + 1;
-          const bodyTop = Math.min(candle.open, candle.close);
-          const bodyBottom = Math.max(candle.open, candle.close);
-
-          const highY = height - ((candle.high - min) / range) * height;
-          const lowY = height - ((candle.low - min) / range) * height;
-          const bodyTopY = height - ((bodyTop - min) / range) * height;
-          const bodyBottomY = height - ((bodyBottom - min) / range) * height;
-
-          // 紅漲綠跌 (台灣習慣)
-          const isRising = candle.close >= candle.open;
-          const color = isRising ? '#ef4444' : '#22c55e'; // 紅色上漲，綠色下跌
-
-          return (
-            <g key={i}>
-              {/* 上下影線 */}
-              <line
-                x1={x + candleWidth / 2}
-                y1={highY}
-                x2={x + candleWidth / 2}
-                y2={lowY}
-                stroke={color}
-                strokeWidth="1"
-              />
-              {/* K線實體 */}
-              <rect
-                x={x}
-                y={bodyTopY}
-                width={candleWidth}
-                height={Math.max(bodyBottomY - bodyTopY, 1)}
-                fill={color}
-                opacity="0.9"
-              />
-            </g>
-          );
-        })}
+        <g>
+          {/* 上下影線 */}
+          <line
+            x1={x + candleWidth / 2}
+            y1={highY}
+            x2={x + candleWidth / 2}
+            y2={lowY}
+            stroke={color}
+            strokeWidth="2"
+          />
+          {/* K線實體 */}
+          <rect
+            x={x}
+            y={bodyTopY}
+            width={candleWidth}
+            height={Math.max(bodyBottomY - bodyTopY, 2)}
+            fill={color}
+            opacity="0.9"
+          />
+        </g>
       </svg>
     );
   };
@@ -229,14 +227,17 @@ export default function MarketIndices({ refreshTrigger }: { refreshTrigger: numb
     return 'text-gray-600 dark:text-gray-400';
   };
 
+  // Filter indices based on user settings
+  const filteredIndices = indices.filter(idx => settings.selectedIndices.includes(idx.symbol));
+
   // Group indices by type and prioritize US indices
-  const usIndices = indices.filter(idx =>
+  const usIndices = filteredIndices.filter(idx =>
     idx.country === 'US' && (idx.type === 'index' || !idx.type)
   );
-  const otherCashIndices = indices.filter(idx =>
+  const otherCashIndices = filteredIndices.filter(idx =>
     idx.country !== 'US' && (idx.type === 'index' || !idx.type)
   );
-  const futuresIndices = indices.filter(idx => idx.type === 'futures');
+  const futuresIndices = filteredIndices.filter(idx => idx.type === 'futures');
 
   // Combine with US indices first
   const cashIndices = [...usIndices, ...otherCashIndices];
@@ -283,6 +284,16 @@ export default function MarketIndices({ refreshTrigger }: { refreshTrigger: numb
                 更新: {lastUpdate.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
               </span>
             )}
+            <button
+              onClick={() => setShowSettings(true)}
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              title="設定"
+            >
+              <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </button>
           </div>
         </div>
       </CardHeader>
@@ -371,6 +382,15 @@ export default function MarketIndices({ refreshTrigger }: { refreshTrigger: numb
           )}
         </div>
       </CardContent>
+
+      {/* Settings Modal */}
+      {showSettings && (
+        <SettingsModal
+          onClose={() => setShowSettings(false)}
+          currentSettings={settings}
+          onSave={handleSaveSettings}
+        />
+      )}
     </Card>
   );
 }

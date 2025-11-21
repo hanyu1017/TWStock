@@ -29,6 +29,8 @@ export default function AddStockModal({ onClose, onSuccess }: AddStockModalProps
   const [notes, setNotes] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isMarginTrading, setIsMarginTrading] = useState(false);
+  const [marginType, setMarginType] = useState<'融資' | '融券'>('融資');
   const searchRef = useRef<HTMLDivElement>(null);
 
   // Handle clicks outside search results to close dropdown
@@ -94,6 +96,8 @@ export default function AddStockModal({ onClose, onSuccess }: AddStockModalProps
             tax: parseFloat(tax) || 0,
             notes,
             date: new Date().toISOString(),
+            isMarginTrading,
+            marginType: isMarginTrading ? marginType : null,
           }),
         });
 
@@ -266,6 +270,50 @@ export default function AddStockModal({ onClose, onSuccess }: AddStockModalProps
                       placeholder="500.00"
                       required
                     />
+                  </div>
+
+                  {/* Margin Trading Options */}
+                  <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <label className="flex items-center gap-2 cursor-pointer mb-3">
+                      <input
+                        type="checkbox"
+                        checked={isMarginTrading}
+                        onChange={(e) => setIsMarginTrading(e.target.checked)}
+                        className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                      />
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        融資融券交易
+                      </span>
+                    </label>
+
+                    {isMarginTrading && (
+                      <div className="flex gap-3 ml-6">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="marginType"
+                            checked={marginType === '融資'}
+                            onChange={() => setMarginType('融資')}
+                            className="w-4 h-4 text-blue-600 focus:ring-2 focus:ring-blue-500"
+                          />
+                          <span className="text-sm text-gray-700 dark:text-gray-300">
+                            融資 (做多)
+                          </span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="marginType"
+                            checked={marginType === '融券'}
+                            onChange={() => setMarginType('融券')}
+                            className="w-4 h-4 text-blue-600 focus:ring-2 focus:ring-blue-500"
+                          />
+                          <span className="text-sm text-gray-700 dark:text-gray-300">
+                            融券 (做空)
+                          </span>
+                        </label>
+                      </div>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">

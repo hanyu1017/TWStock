@@ -45,7 +45,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: '未授權' }, { status: 401 });
     }
 
-    const { symbol, name, quantity, price, type, fee = 0, tax = 0, date, notes } = await req.json();
+    const { symbol, name, quantity, price, type, fee = 0, tax = 0, date, notes, isMarginTrading = false, marginType = null } = await req.json();
 
     if (!symbol || !quantity || !price || !type) {
       return NextResponse.json(
@@ -80,6 +80,8 @@ export async function POST(req: Request) {
           data: {
             quantity: newTotalQuantity,
             averagePrice: newAveragePrice,
+            isMarginTrading,
+            marginType,
             updatedAt: new Date(),
           },
         });
@@ -93,6 +95,8 @@ export async function POST(req: Request) {
             quantity,
             averagePrice: totalAmount / quantity,
             notes,
+            isMarginTrading,
+            marginType,
           },
         });
       }

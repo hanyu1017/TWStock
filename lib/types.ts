@@ -38,6 +38,8 @@ export interface PortfolioItem {
   profitLossPercent?: number;
   currency: string;
   notes?: string;
+  isMarginTrading?: boolean;
+  marginType?: string;
 }
 
 export interface WatchlistItem {
@@ -69,6 +71,12 @@ export interface MarketIndexData {
   change: number;
   changePercent: number;
   lastUpdated: Date;
+  ohlc?: {
+    open: number;
+    high: number;
+    low: number;
+    close: number;
+  };
 }
 
 export interface TransactionData {

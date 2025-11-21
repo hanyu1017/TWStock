@@ -74,7 +74,7 @@ export async function fetchMultipleStocksFallback(symbols: string[]): Promise<St
 }
 
 /**
- * Fetch market indices using Node.js fallback
+ * Fetch market indices using Node.js fallback with OHLC data
  */
 export async function fetchMarketIndicesFallback(): Promise<MarketIndexData[]> {
   const indices = {
@@ -111,12 +111,17 @@ export async function fetchMarketIndicesFallback(): Promise<MarketIndexData[]> {
 
       if (!meta || !quotes || !timestamps || timestamps.length < 2) continue;
 
-      const latest = quotes.close[quotes.close.length - 1];
-      const previous = quotes.close[quotes.close.length - 2];
+      // Get latest candle OHLC data
+      const latestIndex = quotes.close.length - 1;
+      const close = quotes.close[latestIndex];
+      const open = quotes.open[latestIndex];
+      const high = quotes.high[latestIndex];
+      const low = quotes.low[latestIndex];
+      const previous = quotes.close[latestIndex - 1];
 
-      if (!latest || !previous) continue;
+      if (!close || !previous) continue;
 
-      const currentValue = latest;
+      const currentValue = close;
       const previousClose = previous;
       const change = currentValue - previousClose;
       const changePercent = (change / previousClose) * 100;
@@ -131,6 +136,13 @@ export async function fetchMarketIndicesFallback(): Promise<MarketIndexData[]> {
         change,
         changePercent,
         lastUpdated: new Date(),
+        // Add OHLC data for K-bar
+        ohlc: {
+          open: open || close,
+          high: high || close,
+          low: low || close,
+          close,
+        },
       });
     } catch (error) {
       console.error(`Error fetching index ${symbol}:`, error);

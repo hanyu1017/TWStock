@@ -16,6 +16,8 @@ interface Holding {
   marketValue: number;
   profitLoss: number;
   profitLossPercent: number;
+  isMarginTrading?: boolean;
+  marginType?: string;
 }
 
 export default function PortfolioList({ refreshTrigger }: { refreshTrigger: number }) {
@@ -139,8 +141,19 @@ export default function PortfolioList({ refreshTrigger }: { refreshTrigger: numb
                       <div className="flex items-center gap-3">
                         <div className={`w-1 h-12 rounded ${isProfitable ? 'bg-green-500' : 'bg-red-500'}`} />
                         <div>
-                          <div className="font-semibold text-gray-900 dark:text-white">
-                            {holding.name}
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-gray-900 dark:text-white">
+                              {holding.name}
+                            </span>
+                            {holding.isMarginTrading && holding.marginType && (
+                              <span className={`px-2 py-0.5 text-xs font-semibold rounded ${
+                                holding.marginType === '融資'
+                                  ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+                                  : 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300'
+                              }`}>
+                                {holding.marginType}
+                              </span>
+                            )}
                           </div>
                           <div className="text-sm text-gray-500 dark:text-gray-400">
                             {holding.symbol}
