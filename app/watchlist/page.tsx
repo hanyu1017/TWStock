@@ -4,6 +4,14 @@ import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import BottomNav from '@/components/layout/BottomNav';
+import MiniKLine from '@/components/stocks/MiniKLine';
+
+interface OHLCData {
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+}
 
 interface WatchlistItem {
   id: string;
@@ -13,6 +21,7 @@ interface WatchlistItem {
   change?: number;
   changePercent?: number;
   notes?: string;
+  ohlcData?: OHLCData[];
 }
 
 export default function WatchlistPage() {
@@ -154,14 +163,18 @@ export default function WatchlistPage() {
                     className={`p-4 ${getBackgroundColor(change)} border-l-4`}
                   >
                     {/* 股票資訊 */}
-                    <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-start justify-between gap-3 mb-2">
                       <div className="flex-1 min-w-0">
                         <h3 className="font-bold text-white">{item.name}</h3>
                         <p className="text-sm text-slate-400">
                           {item.symbol.replace('.TW', '').replace('.TWO', '')}
                         </p>
                       </div>
-                      <div className="text-right ml-4">
+                      {/* K線圖 */}
+                      <div className="flex-shrink-0">
+                        <MiniKLine data={item.ohlcData || []} width={80} height={40} />
+                      </div>
+                      <div className="text-right flex-shrink-0">
                         <div className="text-lg font-bold text-white">
                           ${item.currentPrice?.toFixed(2) || '--'}
                         </div>

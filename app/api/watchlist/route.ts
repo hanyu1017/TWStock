@@ -4,6 +4,33 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { toYfinanceSymbol, fetchMultipleStocks } from '@/lib/stock-service';
 
+// Helper function to generate mock OHLC data for mini K-line chart
+function generateMockOHLC(stockData: any) {
+  const currentPrice = stockData.currentPrice || 100;
+  const volatility = currentPrice * 0.02; // 2% volatility
+  const ohlcData = [];
+
+  // Generate 5 days of mock data
+  for (let i = 4; i >= 0; i--) {
+    const dayVariation = (Math.random() - 0.5) * volatility;
+    const basePrice = currentPrice - dayVariation * i;
+
+    const open = basePrice + (Math.random() - 0.5) * volatility;
+    const close = basePrice + (Math.random() - 0.5) * volatility;
+    const high = Math.max(open, close) + Math.random() * volatility * 0.5;
+    const low = Math.min(open, close) - Math.random() * volatility * 0.5;
+
+    ohlcData.push({
+      open: Math.max(0, open),
+      high: Math.max(0, high),
+      low: Math.max(0, low),
+      close: Math.max(0, close),
+    });
+  }
+
+  return ohlcData;
+}
+
 // GET all watchlist items for the current user
 export async function GET(req: Request) {
   try {
@@ -31,11 +58,16 @@ export async function GET(req: Request) {
         // Merge stock data with watchlist items
         const enrichedWatchlist = watchlist.map(item => {
           const stockData = stockDataMap.get(item.symbol);
+
+          // Generate simple OHLC data for mini K-line chart (last 5 days mock data)
+          const ohlcData = stockData ? generateMockOHLC(stockData) : [];
+
           return {
             ...item,
             currentPrice: stockData?.currentPrice || null,
             change: stockData?.change || null,
             changePercent: stockData?.changePercent || null,
+            ohlcData,
           };
         });
 
