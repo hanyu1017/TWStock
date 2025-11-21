@@ -94,29 +94,34 @@ export default function PortfolioList({ refreshTrigger }: { refreshTrigger: numb
   return (
     <Card>
       <CardHeader>
-        <CardTitle>持股明細</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          📈 持股明細
+          <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
+            ({holdings.length} 檔)
+          </span>
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-700">
-                <th className="text-left py-3 px-2 text-sm font-semibold text-gray-900 dark:text-white">
+              <tr className="border-b-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+                <th className="text-left py-4 px-4 text-sm font-semibold text-gray-700 dark:text-gray-300">
                   股票
                 </th>
-                <th className="text-right py-3 px-2 text-sm font-semibold text-gray-900 dark:text-white">
+                <th className="text-right py-4 px-4 text-sm font-semibold text-gray-700 dark:text-gray-300">
                   股數
                 </th>
-                <th className="text-right py-3 px-2 text-sm font-semibold text-gray-900 dark:text-white">
+                <th className="text-right py-4 px-4 text-sm font-semibold text-gray-700 dark:text-gray-300">
                   均價
                 </th>
-                <th className="text-right py-3 px-2 text-sm font-semibold text-gray-900 dark:text-white">
+                <th className="text-right py-4 px-4 text-sm font-semibold text-gray-700 dark:text-gray-300">
                   現價
                 </th>
-                <th className="text-right py-3 px-2 text-sm font-semibold text-gray-900 dark:text-white">
+                <th className="text-right py-4 px-4 text-sm font-semibold text-gray-700 dark:text-gray-300">
                   市值
                 </th>
-                <th className="text-right py-3 px-2 text-sm font-semibold text-gray-900 dark:text-white">
+                <th className="text-right py-4 px-4 text-sm font-semibold text-gray-700 dark:text-gray-300">
                   損益
                 </th>
               </tr>
@@ -124,40 +129,58 @@ export default function PortfolioList({ refreshTrigger }: { refreshTrigger: numb
             <tbody>
               {holdings.map((holding) => {
                 const colorClass = getPriceChangeColor(holding.profitLoss);
+                const isProfitable = holding.profitLoss >= 0;
                 return (
                   <tr
                     key={holding.id}
-                    className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                    className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
                   >
-                    <td className="py-3 px-2">
-                      <div>
-                        <div className="font-medium text-gray-900 dark:text-white">
-                          {holding.name}
-                        </div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">
-                          {holding.symbol}
+                    <td className="py-4 px-4">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-1 h-12 rounded ${isProfitable ? 'bg-green-500' : 'bg-red-500'}`} />
+                        <div>
+                          <div className="font-semibold text-gray-900 dark:text-white">
+                            {holding.name}
+                          </div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400">
+                            {holding.symbol}
+                          </div>
                         </div>
                       </div>
                     </td>
-                    <td className="py-3 px-2 text-right text-gray-900 dark:text-white">
-                      {formatNumber(holding.quantity, 0)}
+                    <td className="py-4 px-4 text-right">
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        {formatNumber(holding.quantity, 0)}
+                      </span>
                     </td>
-                    <td className="py-3 px-2 text-right text-gray-900 dark:text-white">
-                      ${formatNumber(holding.averagePrice, 2)}
+                    <td className="py-4 px-4 text-right">
+                      <span className="text-gray-700 dark:text-gray-300">
+                        ${formatNumber(holding.averagePrice, 2)}
+                      </span>
                     </td>
-                    <td className="py-3 px-2 text-right text-gray-900 dark:text-white">
-                      ${formatNumber(holding.currentPrice, 2)}
+                    <td className="py-4 px-4 text-right">
+                      <span className="font-semibold text-gray-900 dark:text-white">
+                        ${formatNumber(holding.currentPrice, 2)}
+                      </span>
                     </td>
-                    <td className="py-3 px-2 text-right text-gray-900 dark:text-white">
-                      {formatCurrency(holding.marketValue)}
+                    <td className="py-4 px-4 text-right">
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        {formatCurrency(holding.marketValue)}
+                      </span>
                     </td>
-                    <td className={`py-3 px-2 text-right font-semibold ${colorClass}`}>
-                      <div>
-                        {holding.profitLoss >= 0 ? '+' : ''}
-                        {formatCurrency(holding.profitLoss)}
-                      </div>
-                      <div className="text-sm">
-                        {formatPercent(holding.profitLossPercent)}
+                    <td className={`py-4 px-4 text-right`}>
+                      <div className={`inline-flex flex-col items-end p-2 rounded-lg ${
+                        isProfitable
+                          ? 'bg-green-50 dark:bg-green-900/20'
+                          : 'bg-red-50 dark:bg-red-900/20'
+                      }`}>
+                        <div className={`font-bold ${colorClass}`}>
+                          {holding.profitLoss >= 0 ? '+' : ''}
+                          {formatCurrency(holding.profitLoss)}
+                        </div>
+                        <div className={`text-sm font-semibold ${colorClass}`}>
+                          {formatPercent(holding.profitLossPercent)}
+                        </div>
                       </div>
                     </td>
                   </tr>
