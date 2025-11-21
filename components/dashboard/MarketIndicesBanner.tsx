@@ -25,7 +25,10 @@ export default function MarketIndicesBanner() {
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'connecting'>('connecting');
   const [selectedIndices, setSelectedIndices] = useState<string[]>(['^TWII', '^DJI', '^IXIC', '^GSPC']);
   const [updateInterval, setUpdateInterval] = useState(5);
+  const [currentPage, setCurrentPage] = useState(0);
   const previousValuesRef = useRef<Map<string, number>>(new Map());
+
+  const ITEMS_PER_PAGE = 4;
 
   // Load settings from database
   const loadSettings = useCallback(async () => {
@@ -99,8 +102,29 @@ export default function MarketIndicesBanner() {
     return () => clearInterval(interval);
   }, [fetchIndices, updateInterval]);
 
-  // Filter indices based on user settings
-  const displayedIndices = indices.filter(idx => selectedIndices.includes(idx.symbol));
+  // Filter and sort indices based on user settings
+  const displayedIndices = indices
+    .filter(idx => selectedIndices.includes(idx.symbol))
+    .sort((a, b) => {
+      // Sort by the order in selectedIndices array
+      const aIndex = selectedIndices.indexOf(a.symbol);
+      const bIndex = selectedIndices.indexOf(b.symbol);
+      return aIndex - bIndex;
+    });
+
+  // Pagination
+  const totalPages = Math.ceil(displayedIndices.length / ITEMS_PER_PAGE);
+  const startIndex = currentPage * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const currentIndices = displayedIndices.slice(startIndex, endIndex);
+
+  const handlePrevPage = () => {
+    setCurrentPage((prev) => Math.max(0, prev - 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(totalPages - 1, prev + 1));
+  };
 
   // 紅漲綠跌顏色
   const getPriceColor = (change: number) => {
@@ -150,8 +174,45 @@ export default function MarketIndicesBanner() {
   return (
     <div className="bg-slate-800 border-b border-slate-700 py-2 px-2">
       <div className="max-w-7xl mx-auto">
-        {/* Connection Status */}
-        <div className="flex items-center justify-end mb-1 px-1">
+        {/* Connection Status and Pagination */}
+        <div className="flex items-center justify-between mb-1 px-1">
+          <div className="flex items-center gap-2">
+            {totalPages > 1 && (
+              <>
+                <button
+                  onClick={handlePrevPage}
+                  disabled={currentPage === 0}
+                  className={`p-1 rounded transition-colors ${
+                    currentPage === 0
+                      ? 'text-slate-600 cursor-not-allowed'
+                      : 'text-slate-300 hover:text-white hover:bg-slate-700'
+                  }`}
+                  aria-label="Previous page"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <span className="text-xs text-slate-400">
+                  {currentPage + 1} / {totalPages}
+                </span>
+                <button
+                  onClick={handleNextPage}
+                  disabled={currentPage === totalPages - 1}
+                  className={`p-1 rounded transition-colors ${
+                    currentPage === totalPages - 1
+                      ? 'text-slate-600 cursor-not-allowed'
+                      : 'text-slate-300 hover:text-white hover:bg-slate-700'
+                  }`}
+                  aria-label="Next page"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </>
+            )}
+          </div>
           <div className="flex items-center gap-1.5 text-xs">
             <div className={`w-1.5 h-1.5 rounded-full ${getConnectionColor()}`} />
             <span className="text-slate-400">{getConnectionText()}</span>
@@ -160,7 +221,7 @@ export default function MarketIndicesBanner() {
 
         {/* Indices Grid - Responsive 2-4 columns */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-          {displayedIndices.slice(0, 4).map((index) => {
+          {currentIndices.map((index) => {
             const isPositive = index.change >= 0;
             return (
               <div
