@@ -37,6 +37,8 @@ model UserSettings {
   timezone              String   @default("Asia/Taipei")
   currency              String   @default("TWD")
   language              String   @default("zh-TW")
+  updateInterval        Int      @default(5)        // 更新頻率（秒）
+  selectedIndices       String   @default("^TWII,^DJI,^IXIC,^GSPC") // 選擇顯示的指數（逗號分隔）
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
 

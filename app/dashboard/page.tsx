@@ -30,9 +30,23 @@ export default function DashboardPage() {
     setRefreshTrigger((prev) => prev + 1);
   };
 
-  const handleSaveSettings = (newSettings: { updateInterval: number; selectedIndices: string[] }) => {
-    setSettings(newSettings);
-    localStorage.setItem('marketIndexSettings', JSON.stringify(newSettings));
+  const handleSaveSettings = async (newSettings: { updateInterval: number; selectedIndices: string[] }) => {
+    try {
+      const response = await fetch('/api/user/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newSettings),
+      });
+
+      if (response.ok) {
+        setSettings(newSettings);
+        // Reload the page to apply new settings
+        window.location.reload();
+      }
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      alert('設定保存失敗，請稍後再試');
+    }
   };
 
   if (status === 'loading') {
@@ -116,6 +130,16 @@ export default function DashboardPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
               <span className="text-sm font-medium text-gray-700">新增股票</span>
+            </button>
+            <button
+              onClick={() => {
+                router.push('/watchlist');
+                setShowMenu(false);
+              }}
+              className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-2 border-b border-gray-100"
+            >
+              <span className="text-gray-600">⭐</span>
+              <span className="text-sm font-medium text-gray-700">關注名單</span>
             </button>
             <button
               onClick={() => {
