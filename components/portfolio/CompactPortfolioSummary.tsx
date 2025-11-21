@@ -86,24 +86,7 @@ export default function CompactPortfolioSummary({ refreshTrigger }: { refreshTri
     <div className="bg-slate-800 rounded-lg p-4 border border-slate-700">
       <h3 className="text-sm font-semibold text-slate-400 mb-3">目前庫存 ({summary.holdingsCount} 檔)</h3>
       <div className="grid grid-cols-3 gap-3">
-        {/* 股票市值 */}
-        <div>
-          <div className="text-xs text-slate-500 mb-1">股票市值</div>
-          <div className="text-lg font-bold text-white">
-            ${formatCurrency(summary.totalValue)}
-          </div>
-        </div>
-
-        {/* 今日損益 */}
-        <div>
-          <div className="text-xs text-slate-500 mb-1">今日損益</div>
-          <div className={`text-lg font-bold ${getProfitColor(summary.todayProfitLoss)}`}>
-            {summary.todayProfitLoss >= 0 ? '+' : ''}
-            ${formatCurrency(Math.abs(summary.todayProfitLoss))}
-          </div>
-        </div>
-
-        {/* 累積損益 */}
+        {/* 累積損益 (最左側) */}
         <div>
           <div className="text-xs text-slate-500 mb-1">累積損益</div>
           <div className={`text-lg font-bold ${getProfitColor(summary.totalProfitLoss)}`}>
@@ -113,6 +96,23 @@ export default function CompactPortfolioSummary({ refreshTrigger }: { refreshTri
           <div className={`text-xs font-semibold ${getProfitColor(summary.totalProfitLoss)}`}>
             {(summary.totalProfitLossPercent ?? 0) >= 0 ? '+' : ''}
             {(summary.totalProfitLossPercent ?? 0).toFixed(2)}%
+          </div>
+        </div>
+
+        {/* 今日損益 (中間) */}
+        <div>
+          <div className="text-xs text-slate-500 mb-1">今日損益</div>
+          <div className={`text-lg font-bold ${getProfitColor(summary.todayProfitLoss)}`}>
+            {summary.todayProfitLoss >= 0 ? '+' : ''}
+            ${formatCurrency(Math.abs(summary.todayProfitLoss))}
+          </div>
+        </div>
+
+        {/* 股票市值 (最右側) */}
+        <div>
+          <div className="text-xs text-slate-500 mb-1">股票市值</div>
+          <div className="text-lg font-bold text-white">
+            ${formatCurrency(summary.totalValue)}
           </div>
         </div>
       </div>

@@ -41,13 +41,13 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-slate-900 px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+          <h1 className="text-4xl font-bold text-white mb-2">
             TWStock
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-slate-300">
             台灣股票投資組合追蹤系統
           </p>
         </div>
