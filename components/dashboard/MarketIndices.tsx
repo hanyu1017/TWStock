@@ -33,8 +33,25 @@ export default function MarketIndices({ refreshTrigger }: { refreshTrigger: numb
       const response = await fetch('/api/indices');
       if (response.ok) {
         const data = await response.json();
-        setIndices(data.indices || []);
-        setConnectionStatus('connected');
+        const fetchedIndices = data.indices || [];
+        setIndices(fetchedIndices);
+
+        // If no indices returned, try to initialize data
+        if (fetchedIndices.length === 0 && !isLoading) {
+          console.log('No indices found, attempting to initialize...');
+          try {
+            const initResponse = await fetch('/api/init-data', { method: 'POST' });
+            if (initResponse.ok) {
+              console.log('Data initialized, retrying fetch...');
+              // Retry fetch after initialization
+              setTimeout(fetchIndices, 2000);
+            }
+          } catch (initError) {
+            console.error('Error initializing data:', initError);
+          }
+        }
+
+        setConnectionStatus(fetchedIndices.length > 0 ? 'connected' : 'disconnected');
         setLastUpdate(new Date());
       } else {
         setConnectionStatus('disconnected');
