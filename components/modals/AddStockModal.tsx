@@ -79,6 +79,19 @@ export default function AddStockModal({ onClose, onSuccess }: AddStockModalProps
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    // Validate that a stock has been selected
+    if (!symbol || !name) {
+      setError('請先從搜尋結果中選擇一檔股票');
+      return;
+    }
+
+    // Validate portfolio-specific fields
+    if (mode === 'portfolio' && (!quantity || !price)) {
+      setError('請填寫股數和買入價格');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -180,6 +193,9 @@ export default function AddStockModal({ onClose, onSuccess }: AddStockModalProps
               <div className="relative" ref={searchRef}>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   搜尋股票 <span className="text-red-500">*</span>
+                  {!symbol && (
+                    <span className="ml-2 text-xs text-gray-500">請從下拉選單選擇</span>
+                  )}
                 </label>
                 <input
                   type="text"
@@ -191,32 +207,41 @@ export default function AddStockModal({ onClose, onSuccess }: AddStockModalProps
                   onFocus={() => searchResults.length > 0 && setShowSearchResults(true)}
                   placeholder="輸入股票代碼或名稱 (例如: 2330 或 台積電)"
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                  required
                 />
 
                 {/* Search Results Dropdown */}
-                {showSearchResults && searchResults.length > 0 && (
+                {showSearchResults && searchQuery.trim() && (
                   <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                    {searchResults.map((stock) => (
-                      <button
-                        key={stock.code}
-                        type="button"
-                        onClick={() => handleSelectStock(stock)}
-                        className="w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center justify-between border-b border-gray-200 dark:border-gray-700 last:border-b-0"
-                      >
-                        <div>
-                          <div className="font-semibold text-gray-900 dark:text-white">
-                            {stock.name}
+                    {searchResults.length > 0 ? (
+                      searchResults.map((stock) => (
+                        <button
+                          key={stock.code}
+                          type="button"
+                          onClick={() => handleSelectStock(stock)}
+                          className="w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center justify-between border-b border-gray-200 dark:border-gray-700 last:border-b-0"
+                        >
+                          <div>
+                            <div className="font-semibold text-gray-900 dark:text-white">
+                              {stock.name}
+                            </div>
+                            <div className="text-sm text-gray-500 dark:text-gray-400">
+                              {stock.code}
+                            </div>
                           </div>
-                          <div className="text-sm text-gray-500 dark:text-gray-400">
-                            {stock.code}
-                          </div>
-                        </div>
-                        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </button>
+                      ))
+                    ) : (
+                      <div className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
+                        <svg className="w-12 h-12 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                      </button>
-                    ))}
+                        <p className="text-sm">找不到相關股票</p>
+                        <p className="text-xs mt-1">請確認代碼或名稱是否正確</p>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -351,6 +376,7 @@ export default function AddStockModal({ onClose, onSuccess }: AddStockModalProps
                   variant="secondary"
                   className="flex-1"
                   onClick={onClose}
+                  disabled={isLoading}
                 >
                   取消
                 </Button>
@@ -358,8 +384,9 @@ export default function AddStockModal({ onClose, onSuccess }: AddStockModalProps
                   type="submit"
                   className="flex-1"
                   isLoading={isLoading}
+                  disabled={!symbol || !name || isLoading || (mode === 'portfolio' && (!quantity || !price))}
                 >
-                  確認新增
+                  {!symbol || !name ? '請先選擇股票' : '確認新增'}
                 </Button>
               </div>
             </form>
