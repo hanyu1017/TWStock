@@ -27,8 +27,8 @@
 
 ### 前端
 - **框架**: Next.js 15 (App Router)
-- **UI 函式庫**: React 19
-- **樣式**: Tailwind CSS 4
+- **UI 函式庫**: React 18
+- **樣式**: Tailwind CSS 3
 - **狀態管理**: SWR
 - **圖表**: Recharts
 - **認證**: NextAuth.js
@@ -36,9 +36,9 @@
 ### 後端
 - **API**: Next.js API Routes
 - **資料庫**: PostgreSQL
-- **ORM**: Prisma
+- **ORM**: Prisma 5
 - **密碼加密**: bcryptjs
-- **郵件服務**: Nodemailer
+- **郵件服務**: Nodemailer 7
 
 ### 數據來源
 - **股價數據**: yfinance (Python)
