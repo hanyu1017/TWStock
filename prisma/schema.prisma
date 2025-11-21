@@ -204,3 +204,21 @@ model MarketIndex {
   @@index([type])
   @@map("market_indices")
 }
+
+model StockOHLC {
+  id        String   @id @default(cuid())
+  symbol    String
+  date      DateTime // Trading date
+  open      Float    // Opening price
+  high      Float    // Highest price
+  low       Float    // Lowest price
+  close     Float    // Closing price
+  volume    BigInt   @default(0) // Trading volume
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([symbol, date])
+  @@index([symbol])
+  @@index([date])
+  @@map("stock_ohlc")
+}
