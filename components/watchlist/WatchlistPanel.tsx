@@ -26,10 +26,11 @@ export default function WatchlistPanel({ refreshTrigger }: { refreshTrigger: num
 
   const fetchWatchlist = async () => {
     try {
-      const response = await fetch('/api/watchlist');
+      // Fetch watchlist with current prices
+      const response = await fetch('/api/watchlist/prices');
       if (response.ok) {
         const data = await response.json();
-        setWatchlist(data.watchlist || []);
+        setWatchlist(data.prices || []);
       }
     } catch (error) {
       console.error('Error fetching watchlist:', error);

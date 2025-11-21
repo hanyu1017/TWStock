@@ -2,10 +2,12 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import path from 'path';
 import { StockData, MarketIndexData } from './types';
+import { fetchStockDataFallback, fetchMultipleStocksFallback } from './stock-fallback';
 
 const execAsync = promisify(exec);
 
 const PYTHON_SCRIPT = path.join(process.cwd(), 'scripts', 'fetch_stock_data.py');
+const USE_FALLBACK = process.env.USE_STOCK_FALLBACK === 'true';
 
 /**
  * Convert Taiwan stock code to yfinance symbol
@@ -23,17 +25,31 @@ export function toYfinanceSymbol(code: string): string {
 }
 
 /**
- * Fetch stock data using yfinance
+ * Fetch stock data using yfinance with fallback
  * @param symbol Stock symbol (e.g., "2330.TW")
  * @returns Stock data
  */
 export async function fetchStockData(symbol: string): Promise<StockData | null> {
+  // Try fallback first if enabled
+  if (USE_FALLBACK) {
+    return fetchStockDataFallback(symbol);
+  }
+
   try {
-    const { stdout } = await execAsync(`python3 ${PYTHON_SCRIPT} stock ${symbol}`);
+    const { stdout, stderr } = await execAsync(
+      `python3 ${PYTHON_SCRIPT} stock ${symbol}`,
+      { timeout: 10000 }
+    );
+
+    if (stderr) {
+      console.warn(`Python script warning for ${symbol}:`, stderr);
+    }
+
     const data = JSON.parse(stdout);
 
     if (!data) {
-      return null;
+      console.log(`No data from Python, trying fallback for ${symbol}`);
+      return fetchStockDataFallback(symbol);
     }
 
     return {
@@ -42,20 +58,39 @@ export async function fetchStockData(symbol: string): Promise<StockData | null> 
     };
   } catch (error) {
     console.error(`Error fetching stock data for ${symbol}:`, error);
-    return null;
+    console.log(`Trying fallback method for ${symbol}`);
+    return fetchStockDataFallback(symbol);
   }
 }
 
 /**
- * Fetch multiple stocks data
+ * Fetch multiple stocks data with fallback
  * @param symbols Array of stock symbols
  * @returns Array of stock data
  */
 export async function fetchMultipleStocks(symbols: string[]): Promise<StockData[]> {
+  // Try fallback first if enabled
+  if (USE_FALLBACK) {
+    return fetchMultipleStocksFallback(symbols);
+  }
+
   try {
     const symbolsStr = symbols.join(' ');
-    const { stdout } = await execAsync(`python3 ${PYTHON_SCRIPT} stocks ${symbolsStr}`);
+    const { stdout, stderr } = await execAsync(
+      `python3 ${PYTHON_SCRIPT} stocks ${symbolsStr}`,
+      { timeout: 15000 }
+    );
+
+    if (stderr) {
+      console.warn('Python script warnings:', stderr);
+    }
+
     const data = JSON.parse(stdout);
+
+    if (!data || data.length === 0) {
+      console.log('No data from Python, trying fallback');
+      return fetchMultipleStocksFallback(symbols);
+    }
 
     return data.map((item: any) => ({
       ...item,
@@ -63,7 +98,8 @@ export async function fetchMultipleStocks(symbols: string[]): Promise<StockData[
     }));
   } catch (error) {
     console.error('Error fetching multiple stocks:', error);
-    return [];
+    console.log('Trying fallback method');
+    return fetchMultipleStocksFallback(symbols);
   }
 }
 
