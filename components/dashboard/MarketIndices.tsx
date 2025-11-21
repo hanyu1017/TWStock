@@ -15,19 +15,26 @@ interface MarketIndex {
   history?: number[]; // Intraday history
 }
 
+interface CandleData {
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+}
+
 export default function MarketIndices({ refreshTrigger }: { refreshTrigger: number }) {
   const [indices, setIndices] = useState<MarketIndex[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'connecting'>('connecting');
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
-  const [countdown, setCountdown] = useState(60);
+  const [countdown, setCountdown] = useState(5);
   const [flashingIndices, setFlashingIndices] = useState<Set<string>>(new Set());
   const previousValuesRef = useRef<Map<string, number>>(new Map());
 
   useEffect(() => {
     fetchIndices();
-    // Refresh every 60 seconds
-    const interval = setInterval(fetchIndices, 60000);
+    // Refresh every 5 seconds
+    const interval = setInterval(fetchIndices, 5000);
     return () => clearInterval(interval);
   }, [refreshTrigger]);
 
@@ -36,7 +43,7 @@ export default function MarketIndices({ refreshTrigger }: { refreshTrigger: numb
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
-          return 60;
+          return 5;
         }
         return prev - 1;
       });
@@ -48,7 +55,7 @@ export default function MarketIndices({ refreshTrigger }: { refreshTrigger: numb
   // Reset countdown when data updates
   useEffect(() => {
     if (lastUpdate) {
-      setCountdown(60);
+      setCountdown(5);
     }
   }, [lastUpdate]);
 
@@ -127,54 +134,99 @@ export default function MarketIndices({ refreshTrigger }: { refreshTrigger: numb
     }
   };
 
-  // Generate simple sparkline chart
-  const generateSparkline = (index: MarketIndex) => {
-    // Generate mock intraday data based on change
-    const points = 20;
-    const data: number[] = [];
+  // Generate candlestick data based on current value and previous close
+  const generateCandlesticks = (index: MarketIndex): CandleData[] => {
+    const candles: CandleData[] = [];
     const start = index.previousClose;
     const end = index.currentValue;
-    const volatility = Math.abs(index.change) * 0.3;
+    const totalChange = end - start;
+    const numCandles = 8; // 8 K線蠟燭
 
-    for (let i = 0; i < points; i++) {
-      const progress = i / (points - 1);
-      const trend = start + (end - start) * progress;
-      const noise = (Math.random() - 0.5) * volatility;
-      data.push(trend + noise);
+    for (let i = 0; i < numCandles; i++) {
+      const progress = i / numCandles;
+      const nextProgress = (i + 1) / numCandles;
+
+      // Calculate trend for this candle
+      const candleStart = start + totalChange * progress;
+      const candleEnd = start + totalChange * nextProgress;
+
+      // Add some randomness for realistic candles
+      const volatility = Math.abs(totalChange) * 0.15;
+      const noise1 = (Math.random() - 0.5) * volatility;
+      const noise2 = (Math.random() - 0.5) * volatility;
+
+      const open = candleStart + noise1;
+      const close = candleEnd + noise2;
+      const high = Math.max(open, close) + Math.random() * volatility * 0.3;
+      const low = Math.min(open, close) - Math.random() * volatility * 0.3;
+
+      candles.push({ open, high, low, close });
     }
 
-    return data;
+    return candles;
   };
 
-  const renderSparkline = (index: MarketIndex) => {
-    const data = generateSparkline(index);
-    const max = Math.max(...data);
-    const min = Math.min(...data);
+  // Render candlestick chart (K線圖)
+  const renderCandlestickChart = (index: MarketIndex) => {
+    const candles = generateCandlesticks(index);
+    const allValues = candles.flatMap(c => [c.high, c.low]);
+    const max = Math.max(...allValues);
+    const min = Math.min(...allValues);
     const range = max - min;
-    const width = 60;
-    const height = 20;
+    const width = 80;
+    const height = 24;
+    const candleWidth = width / candles.length - 2;
 
     if (range === 0) return null;
 
-    const points = data.map((value, i) => {
-      const x = (i / (data.length - 1)) * width;
-      const y = height - ((value - min) / range) * height;
-      return `${x},${y}`;
-    }).join(' ');
-
-    const color = index.change >= 0 ? '#10b981' : '#ef4444';
-
     return (
       <svg width={width} height={height} className="inline-block">
-        <polyline
-          points={points}
-          fill="none"
-          stroke={color}
-          strokeWidth="1.5"
-          opacity="0.8"
-        />
+        {candles.map((candle, i) => {
+          const x = (i * width) / candles.length + 1;
+          const bodyTop = Math.min(candle.open, candle.close);
+          const bodyBottom = Math.max(candle.open, candle.close);
+
+          const highY = height - ((candle.high - min) / range) * height;
+          const lowY = height - ((candle.low - min) / range) * height;
+          const bodyTopY = height - ((bodyTop - min) / range) * height;
+          const bodyBottomY = height - ((bodyBottom - min) / range) * height;
+
+          // 紅漲綠跌 (台灣習慣)
+          const isRising = candle.close >= candle.open;
+          const color = isRising ? '#ef4444' : '#22c55e'; // 紅色上漲，綠色下跌
+
+          return (
+            <g key={i}>
+              {/* 上下影線 */}
+              <line
+                x1={x + candleWidth / 2}
+                y1={highY}
+                x2={x + candleWidth / 2}
+                y2={lowY}
+                stroke={color}
+                strokeWidth="1"
+              />
+              {/* K線實體 */}
+              <rect
+                x={x}
+                y={bodyTopY}
+                width={candleWidth}
+                height={Math.max(bodyBottomY - bodyTopY, 1)}
+                fill={color}
+                opacity="0.9"
+              />
+            </g>
+          );
+        })}
       </svg>
     );
+  };
+
+  // 紅漲綠跌顏色
+  const getPriceColor = (change: number) => {
+    if (change > 0) return 'text-red-600 dark:text-red-400'; // 上漲用紅色
+    if (change < 0) return 'text-green-600 dark:text-green-400'; // 下跌用綠色
+    return 'text-gray-600 dark:text-gray-400';
   };
 
   // Group indices by type and prioritize US indices
@@ -221,7 +273,7 @@ export default function MarketIndices({ refreshTrigger }: { refreshTrigger: numb
                 <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span className={`font-mono font-bold ${countdown <= 10 ? 'text-orange-600 dark:text-orange-400' : 'text-blue-600 dark:text-blue-400'}`}>
+                <span className={`font-mono font-bold ${countdown <= 2 ? 'text-orange-600 dark:text-orange-400' : 'text-blue-600 dark:text-blue-400'}`}>
                   {countdown}s
                 </span>
               </div>
@@ -247,7 +299,7 @@ export default function MarketIndices({ refreshTrigger }: { refreshTrigger: numb
                   <div
                     key={index.symbol}
                     className={`p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all border border-gray-200 dark:border-gray-700 ${
-                      flashingIndices.has(index.symbol) ? 'animate-pulse ring-2 ring-blue-500' : ''
+                      flashingIndices.has(index.symbol) ? 'animate-pulse ring-2 ring-yellow-400' : ''
                     }`}
                   >
                     <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
@@ -257,13 +309,7 @@ export default function MarketIndices({ refreshTrigger }: { refreshTrigger: numb
                       {index.currentValue.toLocaleString('en-US', { maximumFractionDigits: 2 })}
                     </div>
                     <div className="flex items-center justify-between mb-2">
-                      <div
-                        className={`text-xs font-medium ${
-                          index.change >= 0
-                            ? 'text-green-600 dark:text-green-400'
-                            : 'text-red-600 dark:text-red-400'
-                        }`}
-                      >
+                      <div className={`text-xs font-medium ${getPriceColor(index.change)}`}>
                         {index.change >= 0 ? '+' : ''}
                         {index.change.toFixed(2)}
                         <span className="ml-1">
@@ -273,7 +319,7 @@ export default function MarketIndices({ refreshTrigger }: { refreshTrigger: numb
                       </div>
                     </div>
                     <div className="flex justify-center">
-                      {renderSparkline(index)}
+                      {renderCandlestickChart(index)}
                     </div>
                   </div>
                 ))}
@@ -292,7 +338,7 @@ export default function MarketIndices({ refreshTrigger }: { refreshTrigger: numb
                   <div
                     key={index.symbol}
                     className={`p-4 rounded-lg bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 hover:from-blue-100 hover:to-indigo-100 dark:hover:from-blue-900/30 dark:hover:to-indigo-900/30 transition-all border border-blue-200 dark:border-blue-800 ${
-                      flashingIndices.has(index.symbol) ? 'animate-pulse ring-2 ring-indigo-500' : ''
+                      flashingIndices.has(index.symbol) ? 'animate-pulse ring-2 ring-yellow-400' : ''
                     }`}
                   >
                     <div className="flex items-center justify-between mb-2">
@@ -306,13 +352,7 @@ export default function MarketIndices({ refreshTrigger }: { refreshTrigger: numb
                     <div className="font-bold text-lg mb-1">
                       {index.currentValue.toLocaleString('en-US', { maximumFractionDigits: 2 })}
                     </div>
-                    <div
-                      className={`text-sm font-semibold mb-2 ${
-                        index.change >= 0
-                          ? 'text-green-600 dark:text-green-400'
-                          : 'text-red-600 dark:text-red-400'
-                      }`}
-                    >
+                    <div className={`text-sm font-semibold mb-2 ${getPriceColor(index.change)}`}>
                       {index.change >= 0 ? '▲' : '▼'}
                       {' '}
                       {Math.abs(index.change).toFixed(2)}
@@ -322,7 +362,7 @@ export default function MarketIndices({ refreshTrigger }: { refreshTrigger: numb
                       </span>
                     </div>
                     <div className="flex justify-center">
-                      {renderSparkline(index)}
+                      {renderCandlestickChart(index)}
                     </div>
                   </div>
                 ))}
