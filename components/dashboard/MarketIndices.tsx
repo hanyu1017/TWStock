@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import SettingsModal from '@/components/modals/SettingsModal';
 
@@ -59,35 +59,7 @@ export default function MarketIndices({ refreshTrigger }: { refreshTrigger: numb
     }
   }, []);
 
-  useEffect(() => {
-    fetchIndices();
-    // Refresh based on user settings
-    const interval = setInterval(fetchIndices, settings.updateInterval * 1000);
-    return () => clearInterval(interval);
-  }, [refreshTrigger, settings.updateInterval]);
-
-  // Countdown timer
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          return settings.updateInterval;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [settings.updateInterval]);
-
-  // Reset countdown when data updates
-  useEffect(() => {
-    if (lastUpdate) {
-      setCountdown(settings.updateInterval);
-    }
-  }, [lastUpdate, settings.updateInterval]);
-
-  const fetchIndices = async () => {
+  const fetchIndices = useCallback(async () => {
     try {
       setConnectionStatus('connecting');
       const response = await fetch('/api/indices');
@@ -138,7 +110,35 @@ export default function MarketIndices({ refreshTrigger }: { refreshTrigger: numb
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [isLoading]);
+
+  useEffect(() => {
+    fetchIndices();
+    // Refresh based on user settings
+    const interval = setInterval(fetchIndices, settings.updateInterval * 1000);
+    return () => clearInterval(interval);
+  }, [refreshTrigger, settings.updateInterval, fetchIndices]);
+
+  // Countdown timer
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          return settings.updateInterval;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [settings.updateInterval]);
+
+  // Reset countdown when data updates
+  useEffect(() => {
+    if (lastUpdate) {
+      setCountdown(settings.updateInterval);
+    }
+  }, [lastUpdate, settings.updateInterval]);
 
   const getConnectionColor = () => {
     switch (connectionStatus) {

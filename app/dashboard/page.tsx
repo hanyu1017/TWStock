@@ -15,12 +15,25 @@ export default function DashboardPage() {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [showMenu, setShowMenu] = useState(false);
+  const [settings, setSettings] = useState({
+    updateInterval: 5,
+    selectedIndices: ['^TWII', '^DJI', '^IXIC', '^GSPC', '^N225', '^KS11', 'ES=F', 'NQ=F', 'YM=F', 'NKD=F'],
+  });
 
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/login');
     }
   }, [status, router]);
+
+  const handleRefresh = () => {
+    setRefreshTrigger((prev) => prev + 1);
+  };
+
+  const handleSaveSettings = (newSettings: { updateInterval: number; selectedIndices: string[] }) => {
+    setSettings(newSettings);
+    localStorage.setItem('marketIndexSettings', JSON.stringify(newSettings));
+  };
 
   if (status === 'loading') {
     return (
@@ -36,20 +49,6 @@ export default function DashboardPage() {
   if (!session) {
     return null;
   }
-
-  const handleRefresh = () => {
-    setRefreshTrigger((prev) => prev + 1);
-  };
-
-  const [settings, setSettings] = useState({
-    updateInterval: 5,
-    selectedIndices: ['^TWII', '^DJI', '^IXIC', '^GSPC', '^N225', '^KS11', 'ES=F', 'NQ=F', 'YM=F', 'NKD=F'],
-  });
-
-  const handleSaveSettings = (newSettings: { updateInterval: number; selectedIndices: string[] }) => {
-    setSettings(newSettings);
-    localStorage.setItem('marketIndexSettings', JSON.stringify(newSettings));
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
