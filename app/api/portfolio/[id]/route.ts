@@ -6,7 +6,7 @@ import { prisma } from '@/lib/prisma';
 // GET single portfolio
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -14,9 +14,10 @@ export async function GET(
       return NextResponse.json({ error: '未授權' }, { status: 401 });
     }
 
+    const { id } = await params;
     const portfolio = await prisma.portfolio.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: session.user.id,
       },
       include: {
@@ -49,7 +50,7 @@ export async function GET(
 // DELETE portfolio
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -57,9 +58,10 @@ export async function DELETE(
       return NextResponse.json({ error: '未授權' }, { status: 401 });
     }
 
+    const { id } = await params;
     const portfolio = await prisma.portfolio.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: session.user.id,
       },
     });
@@ -72,7 +74,7 @@ export async function DELETE(
     }
 
     await prisma.portfolio.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({ message: '投資組合已刪除' });
@@ -88,7 +90,7 @@ export async function DELETE(
 // PATCH update portfolio
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -97,10 +99,11 @@ export async function PATCH(
     }
 
     const { notes } = await req.json();
+    const { id } = await params;
 
     const portfolio = await prisma.portfolio.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: session.user.id,
       },
     });
@@ -113,7 +116,7 @@ export async function PATCH(
     }
 
     const updated = await prisma.portfolio.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         notes,
         updatedAt: new Date(),

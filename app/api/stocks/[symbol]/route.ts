@@ -6,7 +6,7 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET(
   req: Request,
-  { params }: { params: { symbol: string } }
+  { params }: { params: Promise<{ symbol: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -14,7 +14,7 @@ export async function GET(
       return NextResponse.json({ error: '未授權' }, { status: 401 });
     }
 
-    const { symbol } = params;
+    const { symbol } = await params;
     const yfinanceSymbol = toYfinanceSymbol(symbol);
 
     // Try to get from cache first

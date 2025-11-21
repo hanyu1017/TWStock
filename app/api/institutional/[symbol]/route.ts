@@ -6,7 +6,7 @@ import { extractStockCode } from '@/lib/utils';
 
 export async function GET(
   req: Request,
-  { params }: { params: { symbol: string } }
+  { params }: { params: Promise<{ symbol: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -17,7 +17,7 @@ export async function GET(
     const { searchParams } = new URL(req.url);
     const days = parseInt(searchParams.get('days') || '30');
 
-    const { symbol } = params;
+    const { symbol } = await params;
     const stockCode = extractStockCode(symbol);
     const fullSymbol = `${stockCode}.TW`;
 

@@ -6,7 +6,7 @@ import { prisma } from '@/lib/prisma';
 // DELETE from watchlist
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -14,9 +14,10 @@ export async function DELETE(
       return NextResponse.json({ error: '未授權' }, { status: 401 });
     }
 
+    const { id } = await params;
     const watchlistItem = await prisma.watchlist.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: session.user.id,
       },
     });
@@ -29,7 +30,7 @@ export async function DELETE(
     }
 
     await prisma.watchlist.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({ message: '已從關注名單移除' });
@@ -45,7 +46,7 @@ export async function DELETE(
 // PATCH update watchlist item
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -54,10 +55,11 @@ export async function PATCH(
     }
 
     const { notes, order } = await req.json();
+    const { id } = await params;
 
     const watchlistItem = await prisma.watchlist.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: session.user.id,
       },
     });
@@ -70,7 +72,7 @@ export async function PATCH(
     }
 
     const updated = await prisma.watchlist.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         notes: notes !== undefined ? notes : watchlistItem.notes,
         order: order !== undefined ? order : watchlistItem.order,
