@@ -37,6 +37,7 @@ export async function GET(req: Request) {
         update: {
           name: index.name,
           country: index.country,
+          type: index.type,
           currentValue: index.currentValue,
           previousClose: index.previousClose,
           change: index.change,
@@ -47,6 +48,7 @@ export async function GET(req: Request) {
           symbol: index.symbol,
           name: index.name,
           country: index.country,
+          type: index.type,
           currentValue: index.currentValue,
           previousClose: index.previousClose,
           change: index.change,

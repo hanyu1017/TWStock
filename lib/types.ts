@@ -63,6 +63,7 @@ export interface MarketIndexData {
   symbol: string;
   name: string;
   country: string;
+  type: 'index' | 'futures';
   currentValue: number;
   previousClose: number;
   change: number;

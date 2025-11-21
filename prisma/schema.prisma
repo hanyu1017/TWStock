@@ -185,9 +185,10 @@ model Dividend {
 
 model MarketIndex {
   id            String   @id @default(cuid())
-  symbol        String   @unique  // e.g., "^TWII", "^DJI", "^N225", "^KS11"
-  name          String              // e.g., "Taiwan Weighted", "Dow Jones", "Nikkei 225", "KOSPI"
+  symbol        String   @unique  // e.g., "^TWII", "^DJI", "ES=F", "NQ=F"
+  name          String              // e.g., "加權指數", "道瓊指數", "S&P期貨"
   country       String              // "TW", "US", "JP", "KR"
+  type          String   @default("index") // "index" or "futures"
   currentValue  Float
   previousClose Float
   change        Float
@@ -196,5 +197,6 @@ model MarketIndex {
 
   @@index([symbol])
   @@index([country])
+  @@index([type])
   @@map("market_indices")
 }

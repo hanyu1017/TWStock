@@ -63,14 +63,20 @@ def get_multiple_stocks(symbols):
     return results
 
 def get_market_indices():
-    """Fetch major market indices"""
+    """Fetch major market indices including futures"""
     indices = {
-        '^TWII': {'name': 'Taiwan Weighted', 'country': 'TW'},
-        '^DJI': {'name': 'Dow Jones Industrial Average', 'country': 'US'},
-        '^IXIC': {'name': 'NASDAQ Composite', 'country': 'US'},
-        '^GSPC': {'name': 'S&P 500', 'country': 'US'},
-        '^N225': {'name': 'Nikkei 225', 'country': 'JP'},
-        '^KS11': {'name': 'KOSPI', 'country': 'KR'},
+        # Cash Indices
+        '^TWII': {'name': '加權指數', 'country': 'TW', 'type': 'index'},
+        '^DJI': {'name': '道瓊指數', 'country': 'US', 'type': 'index'},
+        '^IXIC': {'name': '那斯達克', 'country': 'US', 'type': 'index'},
+        '^GSPC': {'name': 'S&P 500', 'country': 'US', 'type': 'index'},
+        '^N225': {'name': '日經指數', 'country': 'JP', 'type': 'index'},
+        '^KS11': {'name': '韓國綜合', 'country': 'KR', 'type': 'index'},
+        # Futures
+        'ES=F': {'name': 'S&P期貨', 'country': 'US', 'type': 'futures'},
+        'NQ=F': {'name': '那指期貨', 'country': 'US', 'type': 'futures'},
+        'YM=F': {'name': '道瓊期貨', 'country': 'US', 'type': 'futures'},
+        'NKD=F': {'name': '日經期貨', 'country': 'JP', 'type': 'futures'},
     }
 
     results = []
@@ -89,6 +95,7 @@ def get_market_indices():
                 'symbol': symbol,
                 'name': info['name'],
                 'country': info['country'],
+                'type': info['type'],
                 'currentValue': float(latest['Close']),
                 'previousClose': float(previous['Close']),
                 'lastUpdated': datetime.now().isoformat()
