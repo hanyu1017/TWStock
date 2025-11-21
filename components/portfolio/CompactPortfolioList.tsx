@@ -157,11 +157,11 @@ export default function CompactPortfolioList({ refreshTrigger, market }: { refre
                   </div>
                   <div className="text-right">
                     <div className="text-sm font-bold text-white">
-                      ${holding.currentPrice.toFixed(2)}
+                      ${(holding.currentPrice ?? 0).toFixed(2)}
                     </div>
-                    <div className={`text-xs font-semibold ${getPriceColor(holding.change)}`}>
-                      {holding.change >= 0 ? '+' : ''}{holding.change.toFixed(2)}
-                      ({holding.changePercent >= 0 ? '+' : ''}{holding.changePercent.toFixed(2)}%)
+                    <div className={`text-xs font-semibold ${getPriceColor(holding.change ?? 0)}`}>
+                      {(holding.change ?? 0) >= 0 ? '+' : ''}{(holding.change ?? 0).toFixed(2)}
+                      ({(holding.changePercent ?? 0) >= 0 ? '+' : ''}{(holding.changePercent ?? 0).toFixed(2)}%)
                     </div>
                   </div>
                 </div>
@@ -170,22 +170,22 @@ export default function CompactPortfolioList({ refreshTrigger, market }: { refre
                 <div className="grid grid-cols-4 gap-2 text-xs">
                   <div>
                     <div className="text-slate-500">股數</div>
-                    <div className="text-white font-medium">{holding.quantity.toLocaleString()}</div>
+                    <div className="text-white font-medium">{(holding.quantity ?? 0).toLocaleString()}</div>
                   </div>
                   <div>
                     <div className="text-slate-500">成本</div>
-                    <div className="text-white font-medium">${holding.averagePrice.toFixed(2)}</div>
+                    <div className="text-white font-medium">${(holding.averagePrice ?? 0).toFixed(2)}</div>
                   </div>
                   <div>
                     <div className="text-slate-500">即時損益</div>
-                    <div className={`font-bold ${getPriceColor(holding.profitLoss)}`}>
-                      {holding.profitLoss >= 0 ? '+' : ''}${Math.abs(holding.profitLoss).toLocaleString()}
+                    <div className={`font-bold ${getPriceColor(holding.profitLoss ?? 0)}`}>
+                      {(holding.profitLoss ?? 0) >= 0 ? '+' : ''}${Math.abs(holding.profitLoss ?? 0).toLocaleString()}
                     </div>
                   </div>
                   <div>
                     <div className="text-slate-500">報酬率</div>
-                    <div className={`font-bold ${getPriceColor(holding.profitLoss)}`}>
-                      {holding.profitLossPercent >= 0 ? '+' : ''}{holding.profitLossPercent.toFixed(2)}%
+                    <div className={`font-bold ${getPriceColor(holding.profitLoss ?? 0)}`}>
+                      {(holding.profitLossPercent ?? 0) >= 0 ? '+' : ''}{(holding.profitLossPercent ?? 0).toFixed(2)}%
                     </div>
                   </div>
                 </div>

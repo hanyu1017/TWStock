@@ -111,8 +111,8 @@ export default function CompactPortfolioSummary({ refreshTrigger }: { refreshTri
             ${formatCurrency(Math.abs(summary.totalProfitLoss))}
           </div>
           <div className={`text-xs font-semibold ${getProfitColor(summary.totalProfitLoss)}`}>
-            {summary.totalProfitLossPercent >= 0 ? '+' : ''}
-            {summary.totalProfitLossPercent.toFixed(2)}%
+            {(summary.totalProfitLossPercent ?? 0) >= 0 ? '+' : ''}
+            {(summary.totalProfitLossPercent ?? 0).toFixed(2)}%
           </div>
         </div>
       </div>
