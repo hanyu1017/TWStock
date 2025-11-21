@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { toYfinanceSymbol } from '@/lib/stock-service';
+import { toYfinanceSymbol, fetchMultipleStocks } from '@/lib/stock-service';
 
 // GET all watchlist items for the current user
 export async function GET(req: Request) {
@@ -16,6 +16,36 @@ export async function GET(req: Request) {
       where: { userId: session.user.id },
       orderBy: { order: 'asc' },
     });
+
+    // Fetch current prices for all watchlist items
+    if (watchlist.length > 0) {
+      try {
+        const symbols = watchlist.map(item => item.symbol);
+        const stockDataList = await fetchMultipleStocks(symbols);
+
+        // Create a map of symbol to stock data
+        const stockDataMap = new Map(
+          stockDataList.map(data => [data.symbol, data])
+        );
+
+        // Merge stock data with watchlist items
+        const enrichedWatchlist = watchlist.map(item => {
+          const stockData = stockDataMap.get(item.symbol);
+          return {
+            ...item,
+            currentPrice: stockData?.currentPrice || null,
+            change: stockData?.change || null,
+            changePercent: stockData?.changePercent || null,
+          };
+        });
+
+        return NextResponse.json({ watchlist: enrichedWatchlist });
+      } catch (priceError) {
+        console.error('Error fetching stock prices:', priceError);
+        // Return watchlist without prices if fetching fails
+        return NextResponse.json({ watchlist });
+      }
+    }
 
     return NextResponse.json({ watchlist });
   } catch (error) {
