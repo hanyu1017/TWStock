@@ -63,6 +63,9 @@ export default function DashboardPage() {
                 </svg>
                 重新整理
               </Button>
+              <Button onClick={() => router.push('/after-market')} variant="secondary" size="sm">
+                📊 盤後法人
+              </Button>
               <Button onClick={() => setShowAddStockModal(true)} size="sm">
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
