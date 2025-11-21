@@ -54,14 +54,23 @@ export default function AddStockModal({ onClose, onSuccess }: AddStockModalProps
       }
 
       try {
+        console.log('Searching for:', searchQuery);
         const response = await fetch(`/api/stocks/search?q=${encodeURIComponent(searchQuery)}`);
+        console.log('Search response status:', response.status);
+
         if (response.ok) {
           const data = await response.json();
+          console.log('Search results:', data.results?.length || 0, 'items');
           setSearchResults(data.results || []);
           setShowSearchResults(true);
+        } else {
+          const errorData = await response.json();
+          console.error('Search error:', errorData);
+          setError(`搜尋失敗: ${errorData.error || '未知錯誤'}`);
         }
       } catch (error) {
         console.error('Error searching stocks:', error);
+        setError('搜尋股票時發生網路錯誤');
       }
     };
 
