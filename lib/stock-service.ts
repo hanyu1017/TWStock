@@ -124,37 +124,6 @@ export async function fetchMarketIndices(): Promise<MarketIndexData[]> {
 
 /**
  * Search for Taiwan stocks by code or name
- * This is a simple implementation. For production, you'd want a proper database of stock symbols
+ * Includes listed stocks, OTC stocks, ETFs, and warrants
  */
-export function searchTaiwanStocks(query: string): { code: string; name: string }[] {
-  // This is a simplified example. In production, you'd have a database of all Taiwan stocks
-  const popularStocks = [
-    { code: '2330', name: '台積電' },
-    { code: '2317', name: '鴻海' },
-    { code: '2454', name: '聯發科' },
-    { code: '2308', name: '台達電' },
-    { code: '2412', name: '中華電' },
-    { code: '1301', name: '台塑' },
-    { code: '1303', name: '南亞' },
-    { code: '2882', name: '國泰金' },
-    { code: '2881', name: '富邦金' },
-    { code: '2886', name: '兆豐金' },
-    { code: '2891', name: '中信金' },
-    { code: '2884', name: '玉山金' },
-    { code: '2892', name: '第一金' },
-    { code: '2395', name: '研華' },
-    { code: '3008', name: '大立光' },
-    { code: '2303', name: '聯電' },
-    { code: '2002', name: '中鋼' },
-    { code: '1216', name: '統一' },
-    { code: '2207', name: '和泰車' },
-    { code: '2409', name: '友達' },
-  ];
-
-  const lowerQuery = query.toLowerCase();
-  return popularStocks.filter(
-    (stock) =>
-      stock.code.includes(lowerQuery) ||
-      stock.name.toLowerCase().includes(lowerQuery)
-  );
-}
+export { searchTaiwanStocks } from './taiwan-stocks-data';

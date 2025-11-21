@@ -17,7 +17,6 @@ export async function GET(req: Request) {
     const portfolio = await prisma.portfolio.findMany({
       where: { userId: session.user.id },
       select: { symbol: true, name: true },
-      distinct: ['symbol'],
     });
 
     // Get user's watchlist stocks
@@ -31,6 +30,11 @@ export async function GET(req: Request) {
     const uniqueStocks = Array.from(
       new Map(allStocks.map((s) => [s.symbol, s])).values()
     );
+
+    // If no stocks, return empty array
+    if (uniqueStocks.length === 0) {
+      return NextResponse.json({ trades: [] });
+    }
 
     // Get institutional trades for all stocks
     const startDate = new Date();

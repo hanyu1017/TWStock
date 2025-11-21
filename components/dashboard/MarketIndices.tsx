@@ -69,9 +69,17 @@ export default function MarketIndices({ refreshTrigger }: { refreshTrigger: numb
     }
   };
 
-  // Group indices by type
-  const cashIndices = indices.filter(idx => idx.type === 'index' || !idx.type);
+  // Group indices by type and prioritize US indices
+  const usIndices = indices.filter(idx =>
+    idx.country === 'US' && (idx.type === 'index' || !idx.type)
+  );
+  const otherCashIndices = indices.filter(idx =>
+    idx.country !== 'US' && (idx.type === 'index' || !idx.type)
+  );
   const futuresIndices = indices.filter(idx => idx.type === 'futures');
+
+  // Combine with US indices first
+  const cashIndices = [...usIndices, ...otherCashIndices];
 
   if (isLoading) {
     return (
