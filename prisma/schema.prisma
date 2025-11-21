@@ -1,0 +1,200 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  password      String
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  portfolios    Portfolio[]
+  watchlists    Watchlist[]
+  alerts        Alert[]
+  settings      UserSettings?
+
+  @@map("users")
+}
+
+model UserSettings {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dailyEmailEnabled     Boolean  @default(true)
+  emailTime             String   @default("16:00")
+  timezone              String   @default("Asia/Taipei")
+  currency              String   @default("TWD")
+  language              String   @default("zh-TW")
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@map("user_settings")
+}
+
+model Portfolio {
+  id              String      @id @default(cuid())
+  userId          String
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  symbol          String      // Stock symbol (e.g., "2330.TW" for TSMC)
+  name            String      // Stock name
+  quantity        Float       // Number of shares
+  averagePrice    Float       // Average purchase price
+  currency        String      @default("TWD")
+  notes           String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  transactions    Transaction[]
+  dividends       Dividend[]
+
+  @@index([userId])
+  @@index([symbol])
+  @@map("portfolios")
+}
+
+model Transaction {
+  id          String      @id @default(cuid())
+  portfolioId String
+  portfolio   Portfolio   @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  type        String      // "BUY" or "SELL"
+  symbol      String
+  quantity    Float
+  price       Float
+  fee         Float       @default(0)
+  tax         Float       @default(0)
+  totalAmount Float       // Total transaction amount
+  date        DateTime
+  notes       String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([portfolioId])
+  @@index([symbol])
+  @@index([date])
+  @@map("transactions")
+}
+
+model Watchlist {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  symbol    String   // Stock symbol
+  name      String   // Stock name
+  notes     String?
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, symbol])
+  @@index([userId])
+  @@map("watchlists")
+}
+
+model StockPrice {
+  id              String   @id @default(cuid())
+  symbol          String   @unique
+  name            String
+  currentPrice    Float
+  previousClose   Float
+  open            Float
+  high            Float
+  low             Float
+  volume          BigInt
+  change          Float
+  changePercent   Float
+  marketCap       BigInt?
+  pe              Float?
+  dividend        Float?
+  lastUpdated     DateTime @default(now())
+
+  @@index([symbol])
+  @@map("stock_prices")
+}
+
+model InstitutionalTrade {
+  id                String   @id @default(cuid())
+  symbol            String
+  date              DateTime
+  foreignInvestor   BigInt   // 外資買賣超 (Foreign investors net buy/sell)
+  investmentTrust   BigInt   // 投信買賣超 (Investment trust net buy/sell)
+  dealer            BigInt   // 自營商買賣超 (Dealers net buy/sell)
+  total             BigInt   // 三大法人合計
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([symbol, date])
+  @@index([symbol])
+  @@index([date])
+  @@map("institutional_trades")
+}
+
+model Alert {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  symbol      String
+  name        String
+  targetPrice Float
+  condition   String   // "ABOVE" or "BELOW"
+  isActive    Boolean  @default(true)
+  isTriggered Boolean  @default(false)
+  triggeredAt DateTime?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([symbol])
+  @@index([isActive])
+  @@map("alerts")
+}
+
+model Dividend {
+  id          String    @id @default(cuid())
+  portfolioId String
+  portfolio   Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  symbol      String
+  exDate      DateTime  // 除息日
+  payDate     DateTime? // 發放日
+  amount      Float     // 每股股息
+  quantity    Float     // 持有股數
+  totalAmount Float     // 總股息金額
+  tax         Float     @default(0)
+  netAmount   Float     // 實收金額
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([portfolioId])
+  @@index([symbol])
+  @@index([exDate])
+  @@map("dividends")
+}
+
+model MarketIndex {
+  id            String   @id @default(cuid())
+  symbol        String   @unique  // e.g., "^TWII", "^DJI", "^N225", "^KS11"
+  name          String              // e.g., "Taiwan Weighted", "Dow Jones", "Nikkei 225", "KOSPI"
+  country       String              // "TW", "US", "JP", "KR"
+  currentValue  Float
+  previousClose Float
+  change        Float
+  changePercent Float
+  lastUpdated   DateTime @default(now())
+
+  @@index([symbol])
+  @@index([country])
+  @@map("market_indices")
+}
