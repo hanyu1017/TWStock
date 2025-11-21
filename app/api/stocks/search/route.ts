@@ -1,11 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { exec } from 'child_process';
-import { promisify } from 'util';
-import path from 'path';
-
-const execAsync = promisify(exec);
+import { fetchTaiwanStocksFallback } from '@/lib/stock-fallback';
 
 // Cache for stock list
 let stockListCache: {
@@ -18,19 +14,22 @@ const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 async function getAllStocks() {
   // Check cache
   if (stockListCache && Date.now() - stockListCache.timestamp < CACHE_DURATION) {
+    console.log('Using cached stock list');
     return stockListCache.data;
   }
 
   try {
-    const scriptPath = path.join(process.cwd(), 'scripts', 'fetch_twse_stocks.py');
-    const { stdout } = await execAsync(`python3 ${scriptPath} all`, { timeout: 30000 });
-    const stocks = JSON.parse(stdout);
+    console.log('Fetching fresh stock list from TWSE...');
+    const stocks = await fetchTaiwanStocksFallback();
 
-    // Update cache
-    stockListCache = {
-      data: stocks,
-      timestamp: Date.now(),
-    };
+    if (stocks.length > 0) {
+      // Update cache
+      stockListCache = {
+        data: stocks,
+        timestamp: Date.now(),
+      };
+      console.log(`Fetched ${stocks.length} stocks from TWSE`);
+    }
 
     return stocks;
   } catch (error) {

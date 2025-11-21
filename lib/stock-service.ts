@@ -2,7 +2,11 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import path from 'path';
 import { StockData, MarketIndexData } from './types';
-import { fetchStockDataFallback, fetchMultipleStocksFallback } from './stock-fallback';
+import {
+  fetchStockDataFallback,
+  fetchMultipleStocksFallback,
+  fetchMarketIndicesFallback
+} from './stock-fallback';
 
 const execAsync = promisify(exec);
 
@@ -105,21 +109,13 @@ export async function fetchMultipleStocks(symbols: string[]): Promise<StockData[
 
 /**
  * Fetch market indices (US, Japan, Korea, Taiwan)
+ * Always uses Node.js fallback for reliability
  * @returns Array of market index data
  */
 export async function fetchMarketIndices(): Promise<MarketIndexData[]> {
-  try {
-    const { stdout } = await execAsync(`python3 ${PYTHON_SCRIPT} indices`);
-    const data = JSON.parse(stdout);
-
-    return data.map((item: any) => ({
-      ...item,
-      lastUpdated: new Date(item.lastUpdated),
-    }));
-  } catch (error) {
-    console.error('Error fetching market indices:', error);
-    return [];
-  }
+  // Always use Node.js fallback for better reliability
+  console.log('Fetching market indices using Node.js fallback...');
+  return fetchMarketIndicesFallback();
 }
 
 /**
