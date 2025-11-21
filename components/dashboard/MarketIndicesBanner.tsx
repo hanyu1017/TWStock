@@ -57,6 +57,29 @@ export default function MarketIndicesBanner() {
       if (response.ok) {
         const data = await response.json();
         const fetchedIndices = data.indices || [];
+
+        // Check for value changes and trigger flash animation
+        const newFlashingIndices = new Set<string>();
+        fetchedIndices.forEach((index: MarketIndex) => {
+          const previousValue = previousValuesRef.current.get(index.symbol);
+          if (previousValue !== undefined && previousValue !== index.currentValue) {
+            newFlashingIndices.add(index.symbol);
+          }
+          previousValuesRef.current.set(index.symbol, index.currentValue);
+        });
+
+        // Trigger flash animation for updated indices
+        if (newFlashingIndices.size > 0) {
+          const flashElements = document.querySelectorAll('.index-card');
+          flashElements.forEach((el) => {
+            const symbol = el.getAttribute('data-symbol');
+            if (symbol && newFlashingIndices.has(symbol)) {
+              el.classList.add('flash-update');
+              setTimeout(() => el.classList.remove('flash-update'), 800);
+            }
+          });
+        }
+
         setIndices(fetchedIndices);
         setConnectionStatus(fetchedIndices.length > 0 ? 'connected' : 'disconnected');
       } else {
@@ -87,9 +110,9 @@ export default function MarketIndicesBanner() {
   };
 
   const getBackgroundColor = (change: number) => {
-    if (change > 0) return 'bg-red-50 border-red-200'; // 上漲背景
-    if (change < 0) return 'bg-green-50 border-green-200'; // 下跌背景
-    return 'bg-gray-50 border-gray-200';
+    if (change > 0) return 'bg-red-900/20 border-red-700'; // 上漲背景
+    if (change < 0) return 'bg-green-900/20 border-green-700'; // 下跌背景
+    return 'bg-slate-700 border-slate-600';
   };
 
   const getConnectionColor = () => {
@@ -116,22 +139,22 @@ export default function MarketIndicesBanner() {
 
   if (isLoading) {
     return (
-      <div className="bg-white border-b border-gray-200 py-3">
+      <div className="bg-slate-800 border-b border-slate-700 py-3">
         <div className="flex items-center justify-center h-20">
-          <div className="animate-pulse text-sm text-gray-400">載入中...</div>
+          <div className="animate-pulse text-sm text-slate-400">載入中...</div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white border-b border-gray-200 py-2 px-2">
+    <div className="bg-slate-800 border-b border-slate-700 py-2 px-2">
       <div className="max-w-7xl mx-auto">
         {/* Connection Status */}
         <div className="flex items-center justify-end mb-1 px-1">
           <div className="flex items-center gap-1.5 text-xs">
             <div className={`w-1.5 h-1.5 rounded-full ${getConnectionColor()}`} />
-            <span className="text-gray-500">{getConnectionText()}</span>
+            <span className="text-slate-400">{getConnectionText()}</span>
           </div>
         </div>
 
@@ -142,13 +165,14 @@ export default function MarketIndicesBanner() {
             return (
               <div
                 key={index.symbol}
-                className={`px-3 py-2 rounded-lg border ${getBackgroundColor(index.change)}`}
+                data-symbol={index.symbol}
+                className={`index-card px-3 py-2 rounded-lg border ${getBackgroundColor(index.change)} transition-all duration-200`}
               >
-                <div className="text-xs font-medium text-gray-700 mb-0.5 truncate">
+                <div className="text-xs font-medium text-slate-300 mb-0.5 truncate">
                   {index.name}
                 </div>
                 <div className="flex items-baseline justify-between gap-1 mb-0.5">
-                  <div className="text-base font-bold text-gray-900">
+                  <div className="text-base font-bold text-white">
                     {index.currentValue.toLocaleString('en-US', { maximumFractionDigits: 2 })}
                   </div>
                   <div className={`text-xs font-semibold ${getPriceColor(index.change)} flex items-center`}>
