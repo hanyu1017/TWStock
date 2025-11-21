@@ -53,10 +53,10 @@ export interface WatchlistItem {
 export interface InstitutionalTradeData {
   symbol: string;
   date: Date;
-  foreignInvestor: number;
-  investmentTrust: number;
-  dealer: number;
-  total: number;
+  foreignInvestor: bigint;
+  investmentTrust: bigint;
+  dealer: bigint;
+  total: bigint;
 }
 
 export interface MarketIndexData {
